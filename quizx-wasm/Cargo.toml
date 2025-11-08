@@ -14,3 +14,8 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 quizx = { path = "../quizx/quizx" }
 wasm-bindgen = "0.2.105"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+console_error_panic_hook = "0.1"
+getrandom = { version = "0.3", features = ["wasm_js"] }
+num = "0.4"
