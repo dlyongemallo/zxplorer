@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     host: true,  // Listen on all network interfaces (accessible from LAN).
     fs: {
-      allow: ['..']
+      allow: ['..', '../..']
     }
   }
 })
