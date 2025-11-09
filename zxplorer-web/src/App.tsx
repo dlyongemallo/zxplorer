@@ -59,6 +59,10 @@ function App() {
 
   return (
     <div className="App">
+      <header>
+        <h1>ZXplorer</h1>
+        <p>Interactive ZX-diagram editor powered by QuiZX</p>
+      </header>
       <ZXDiagram />
     </div>
   )
