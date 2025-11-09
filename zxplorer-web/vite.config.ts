@@ -9,6 +9,7 @@ export default defineConfig({
     exclude: ['quizx-wasm']
   },
   server: {
+    host: true,  // Listen on all network interfaces (accessible from LAN)
     fs: {
       allow: ['..', '../..']
     }
