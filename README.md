@@ -10,7 +10,7 @@ ZXplorer is an interactive editor for ZX-diagrams, a graphical language for quan
 
 - **Rust** (stable) with `wasm32-unknown-unknown` target
 - **Node.js** 20+ and npm
-- **wasm-bindgen-cli** 0.2.104 (installed automatically by build script)
+- **wasm-pack** (install with `cargo install wasm-pack`)
 - **wasm-opt** (optional, for optimization)
 
 ### Install Rust and wasm32 target
@@ -44,11 +44,11 @@ git submodule update --init --recursive
 
 ```bash
 cd quizx-wasm
-./build.sh
+wasm-pack build --target web
 cd ..
 ```
 
-This compiles the Rust QuiZX bindings to WebAssembly and generates the `pkg/` directory.
+This compiles the Rust QuiZX bindings to WebAssembly and generates the `pkg/` directory. wasm-pack will automatically use wasm-bindgen 0.2.104 as specified in Cargo.toml.
 
 ### 3. Install npm dependencies
 
@@ -72,7 +72,7 @@ zxplorer/
 ├── quizx/              # QuiZX library (Rust, submodule)
 ├── quizx-wasm/         # WebAssembly bindings for QuiZX
 │   ├── src/lib.rs      # Rust WASM API
-│   ├── build.sh        # Build script
+│   ├── Cargo.toml      # Rust dependencies (pins wasm-bindgen to 0.2.104)
 │   └── pkg/            # Generated WASM package (after build)
 └── zxplorer-web/       # React web application
     ├── src/            # TypeScript source code
@@ -81,7 +81,7 @@ zxplorer/
 
 ## Development
 
-- **WASM changes**: Rebuild with `cd quizx-wasm && ./build.sh`
+- **WASM changes**: Rebuild with `cd quizx-wasm && wasm-pack build --target web`
 - **React changes**: Hot-reload is automatic when dev server is running
 - **Build for production**: `npm run build` in zxplorer-web/
 
