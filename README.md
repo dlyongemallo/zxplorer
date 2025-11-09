@@ -44,11 +44,11 @@ git submodule update --init --recursive
 
 ```bash
 cd quizx-wasm
-wasm-pack build --target web
+./build-wasm.sh
 cd ..
 ```
 
-This compiles the Rust QuiZX bindings to WebAssembly and generates the `pkg/` directory. wasm-pack will automatically use wasm-bindgen 0.2.104 as specified in Cargo.toml.
+This compiles the Rust QuiZX bindings to WebAssembly with browser compatibility fixes.
 
 ### 3. Install npm dependencies
 
@@ -73,6 +73,7 @@ zxplorer/
 ├── quizx-wasm/         # WebAssembly bindings for QuiZX
 │   ├── src/lib.rs      # Rust WASM API
 │   ├── Cargo.toml      # Rust dependencies (pins wasm-bindgen to 0.2.104)
+│   ├── patch-wasm.js   # Post-build patch for table.grow() issue
 │   └── pkg/            # Generated WASM package (after build)
 └── zxplorer-web/       # React web application
     ├── src/            # TypeScript source code
@@ -81,7 +82,7 @@ zxplorer/
 
 ## Development
 
-- **WASM changes**: Rebuild with `cd quizx-wasm && wasm-pack build --target web`
+- **WASM changes**: Rebuild with `cd quizx-wasm && ./build-wasm.sh`
 - **React changes**: Hot-reload is automatic when dev server is running
 - **Build for production**: `npm run build` in zxplorer-web/
 
