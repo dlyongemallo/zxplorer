@@ -1,0 +1,3 @@
+[submodule "quizx"]
+	path = quizx
+	url = https://github.com/zxcalc/quizx
