@@ -77,6 +77,9 @@ const ZXDiagram = () => {
   const [showHelp, setShowHelp] = useState<boolean>(false)
 
   useEffect(() => {
+    // Guard against React StrictMode double-mounting in development
+    if (graph) return
+
     try {
       // Create default example graph (ZXLive default)
       console.log('Creating example graph...')
@@ -87,7 +90,7 @@ const ZXDiagram = () => {
     } catch (err) {
       console.error('Error creating graph:', err)
     }
-  }, [])
+  }, [graph])
 
   // Add native wheel event listener to prevent page scroll during zoom
   useEffect(() => {
