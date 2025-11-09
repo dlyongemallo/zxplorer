@@ -5,6 +5,14 @@ import { VertexType, ToolType, Vertex, Edge, ClipboardData } from '../../core/ty
 import { createExampleGraph } from '../../src/utils/exampleGraphs'
 
 const ZXDiagram = () => {
+  // Constants for coordinate system
+  const scale = 80 // Pixels per unit
+  const viewBoxWidth = 700
+  const viewBoxHeight = 650
+  // Offsets to position graph in canvas - these determine where graph (0,0) appears
+  const offsetX = 100
+  const offsetY = 200  // Adjusted to center typical graphs vertically
+
   const [graph, setGraph] = useState<ZXGraph | null>(null)
   const [vertices, setVertices] = useState<Vertex[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -107,6 +115,39 @@ const ZXDiagram = () => {
     return () => canvas.removeEventListener('wheel', handleNativeWheel)
   }, [])
 
+  // Add global mouseup listener to handle mouse release outside canvas
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      // Only process if we're actually dragging/interacting something
+      const isInteracting = draggingVertex !== null || isPanning || edgeDragStart !== null ||
+                           isBoxSelecting || draggingEdgeCurve !== null
+
+      if (!isInteracting) return
+
+      // Clear all dragging states when mouse is released anywhere
+      if (draggingVertex !== null && graph) {
+        const vertex = vertices.find(v => v.id === draggingVertex)
+        if (vertex) {
+          graph.set_vertex_position(vertex.id, vertex.row, vertex.col)
+        }
+      }
+
+      setDraggingVertex(null)
+      setIsPanning(false)
+      setEdgeDragStart(null)
+      setEdgeDragPos(null)
+      setIsBoxSelecting(false)
+      setBoxStart(null)
+      setBoxEnd(null)
+      setDraggingEdgeCurve(null)
+      setEdgeCurveDragStart(null)
+      setPendingVertexPlacement(null)
+    }
+
+    document.addEventListener('mouseup', handleGlobalMouseUp)
+    return () => document.removeEventListener('mouseup', handleGlobalMouseUp)
+  }, [draggingVertex, isPanning, edgeDragStart, isBoxSelecting, draggingEdgeCurve, graph, vertices])
+
   const updateGraphData = (g: ZXGraph) => {
     try {
       const verticesJson = g.get_vertices_json()
@@ -172,8 +213,8 @@ const ZXDiagram = () => {
 
     // Apply inverse pan and zoom transformations
     // Swap: row maps to x (horizontal), col maps to y (vertical)
-    const row = ((svgP.x - panOffset.x) / zoom - 100) / scale
-    const col = ((svgP.y - panOffset.y) / zoom - 50) / scale
+    const row = ((svgP.x - panOffset.x) / zoom - offsetX) / scale
+    const col = ((svgP.y - panOffset.y) / zoom - offsetY) / scale
 
     return { row: snapValue(row), col: snapValue(col) }
   }
@@ -181,8 +222,8 @@ const ZXDiagram = () => {
   // Helper: convert graph coordinates to screen coordinates (unused for now)
   // ZXLive convention: row (time) is horizontal (x), col (qubit) is vertical (y)
   // const _graphToScreen = (row: number, col: number): { x: number; y: number } => {
-  //   const x = (row * scale + 100) * zoom + panOffset.x
-  //   const y = (col * scale + 50) * zoom + panOffset.y
+  //   const x = (row * scale + offsetX) * zoom + panOffset.x
+  //   const y = (col * scale + offsetY) * zoom + panOffset.y
   //   return { x, y }
   // }
 
@@ -538,10 +579,10 @@ const ZXDiagram = () => {
     if (!sourceVertex || !targetVertex) return
 
     // Calculate perpendicular movement
-    const x1 = sourceVertex.row * scale + 100
-    const y1 = sourceVertex.col * scale + 50
-    const x2 = targetVertex.row * scale + 100
-    const y2 = targetVertex.col * scale + 50
+    const x1 = sourceVertex.row * scale + offsetX
+    const y1 = sourceVertex.col * scale + offsetY
+    const x2 = targetVertex.row * scale + offsetX
+    const y2 = targetVertex.col * scale + offsetY
 
     const perp = computePerpendicular(x1, y1, x2, y2)
     const dx = e.clientX - edgeCurveDragStart.x
@@ -778,10 +819,10 @@ const ZXDiagram = () => {
       const svgP2 = pt2.matrixTransform(svg.getScreenCTM()?.inverse())
 
       // Convert to graph coordinates
-      const minRow = ((svgP1.x - panOffset.x) / zoom - 100) / scale
-      const minCol = ((svgP1.y - panOffset.y) / zoom - 50) / scale
-      const maxRow = ((svgP2.x - panOffset.x) / zoom - 100) / scale
-      const maxCol = ((svgP2.y - panOffset.y) / zoom - 50) / scale
+      const minRow = ((svgP1.x - panOffset.x) / zoom - offsetX) / scale
+      const minCol = ((svgP1.y - panOffset.y) / zoom - offsetY) / scale
+      const maxRow = ((svgP2.x - panOffset.x) / zoom - offsetX) / scale
+      const maxCol = ((svgP2.y - panOffset.y) / zoom - offsetY) / scale
 
       // Select all vertices within the box
       const boxedVertices = new Set<number>()
@@ -882,8 +923,8 @@ const ZXDiagram = () => {
 
       // Calculate new screen position of the same graph point
       // Remember: row maps to X (horizontal), col maps to Y (vertical)
-      const newScreenX = (oldRow * scale + 100) * newZoom
-      const newScreenY = (oldCol * scale + 50) * newZoom
+      const newScreenX = (oldRow * scale + offsetX) * newZoom
+      const newScreenY = (oldCol * scale + offsetY) * newZoom
 
       // Adjust pan offset to keep point under cursor
       setPanOffset({
@@ -1334,8 +1375,6 @@ const ZXDiagram = () => {
     return `${phase}π`
   }
 
-  const scale = 80 // Pixels per unit
-
   // Helper function to calculate perpendicular direction for edge curvature
   const computePerpendicular = (x1: number, y1: number, x2: number, y2: number): { x: number; y: number } => {
     const dx = x2 - x1
@@ -1588,14 +1627,12 @@ const ZXDiagram = () => {
             {showGrid && (() => {
               // Calculate visible range in graph coordinates
               // viewBox is 700x650, transform is translate(panOffset) scale(zoom)
-              const viewBoxWidth = 700
-              const viewBoxHeight = 650
 
               // Calculate the graph coordinate bounds visible in the current view
-              const minX = (-panOffset.x / zoom) / scale
-              const maxX = ((viewBoxWidth - panOffset.x) / zoom) / scale
-              const minY = (-panOffset.y / zoom) / scale
-              const maxY = ((viewBoxHeight - panOffset.y) / zoom) / scale
+              const minX = ((-panOffset.x) / zoom - offsetX) / scale
+              const maxX = ((viewBoxWidth - panOffset.x) / zoom - offsetX) / scale
+              const minY = ((-panOffset.y) / zoom - offsetY) / scale
+              const maxY = ((viewBoxHeight - panOffset.y) / zoom - offsetY) / scale
 
               // Round to grid boundaries and add extra padding to ensure full coverage
               const startX = Math.floor(minX / gridSize) - 12
@@ -1612,10 +1649,10 @@ const ZXDiagram = () => {
                   {Array.from({ length: numVerticalLines }, (_, i) => startX + i).map(i => (
                     <line
                       key={`grid-v-${i}`}
-                      x1={i * gridSize * scale}
-                      y1={startY * gridSize * scale}
-                      x2={i * gridSize * scale}
-                      y2={endY * gridSize * scale}
+                      x1={i * gridSize * scale + offsetX}
+                      y1={startY * gridSize * scale + offsetY}
+                      x2={i * gridSize * scale + offsetX}
+                      y2={endY * gridSize * scale + offsetY}
                       stroke="#cccccc"
                       strokeWidth="1"
                     />
@@ -1624,10 +1661,10 @@ const ZXDiagram = () => {
                   {Array.from({ length: numHorizontalLines }, (_, i) => startY + i).map(i => (
                     <line
                       key={`grid-h-${i}`}
-                      x1={startX * gridSize * scale}
-                      y1={i * gridSize * scale}
-                      x2={endX * gridSize * scale}
-                      y2={i * gridSize * scale}
+                      x1={startX * gridSize * scale + offsetX}
+                      y1={i * gridSize * scale + offsetY}
+                      x2={endX * gridSize * scale + offsetX}
+                      y2={i * gridSize * scale + offsetY}
                       stroke="#cccccc"
                       strokeWidth="1"
                     />
@@ -1647,10 +1684,10 @@ const ZXDiagram = () => {
             const isSelected = selectedEdges.has(edgeId)
             const isSelfLoop = edge.source === edge.target
 
-            const x1 = sourceVertex.row * scale + 100
-            const y1 = sourceVertex.col * scale + 50
-            const x2 = targetVertex.row * scale + 100
-            const y2 = targetVertex.col * scale + 50
+            const x1 = sourceVertex.row * scale + offsetX
+            const y1 = sourceVertex.col * scale + offsetY
+            const x2 = targetVertex.row * scale + offsetX
+            const y2 = targetVertex.col * scale + offsetY
 
             // ZXLive style: Simple edges are black, Hadamard edges are blue dashed
             const edgeColor = isHadamardEdge ? '#0077ff' : '#000000'
@@ -1754,10 +1791,10 @@ const ZXDiagram = () => {
             const sourceVertex = vertices.find(v => v.id === edgeDragStart)
             if (!sourceVertex) return null
 
-            const x1 = sourceVertex.row * scale + 100
-            const y1 = sourceVertex.col * scale + 50
-            const x2 = edgeDragPos.x * scale + 100
-            const y2 = edgeDragPos.y * scale + 50
+            const x1 = sourceVertex.row * scale + offsetX
+            const y1 = sourceVertex.col * scale + offsetY
+            const x2 = edgeDragPos.x * scale + offsetX
+            const y2 = edgeDragPos.y * scale + offsetY
 
             const edgeColor = selectedEdgeType === 1 ? '#0077ff' : '#000000'
             const dashArray = selectedEdgeType === 1 ? '8,4' : undefined
@@ -1783,8 +1820,8 @@ const ZXDiagram = () => {
             const isHadamard = vertex.vertex_type === VertexType.H
             const isBoundary = vertex.vertex_type === VertexType.Boundary
             const isSelected = selectedVertices.has(vertex.id)
-            const cx = vertex.row * scale + 100
-            const cy = vertex.col * scale + 50
+            const cx = vertex.row * scale + offsetX
+            const cy = vertex.col * scale + offsetY
             const size = isBoundary ? 8 : 22
 
             // ZXLive style: selected vertices have thicker border and darker fill
