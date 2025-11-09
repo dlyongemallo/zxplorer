@@ -4,37 +4,17 @@ A web-based ZX-calculus diagram editor built with React, TypeScript, and Rust/We
 
 ## Overview
 
-ZXplorer is an interactive editor for ZX-diagrams, a graphical language for quantum computing and quantum information. It uses the [QuiZX](https://github.com/zxcalc/quizx) library (Rust) compiled to WebAssembly for graph operations.
+ZXplorer is web-based editor for [ZX-diagrams](https://zxcalculus.com/), a graphical language for quantum computation and quantum information. It uses the [QuiZX](https://github.com/zxcalc/quizx) library (Rust) compiled to WebAssembly for graph operations. It is inspired by [ZXLive](https://github.com/zxcalc/zxlive).
 
 ## Prerequisites
 
 - **Rust** (stable) with `wasm32-unknown-unknown` target
 - **Node.js** 20+ and npm
-- **wasm-bindgen-cli** 0.2.104 (installed automatically by build script)
-- **wasm-opt** (optional, for optimization)
-
-### Install Rust and wasm32 target
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-rustup target add wasm32-unknown-unknown
-```
-
-### Install wasm-opt (optional)
-
-On macOS:
-```bash
-brew install binaryen
-```
-
-On Ubuntu/Debian:
-```bash
-sudo apt install binaryen
-```
+- **wasm-bindgen-cli** 0.2.105 (installed automatically by build script)
 
 ## Building
 
-### 1. Initialize submodules
+### 1. Initialize quixz submodule
 
 ```bash
 git submodule update --init --recursive
@@ -82,14 +62,6 @@ zxplorer/
 ## Development
 
 - **WASM changes**: Rebuild with `cd quizx-wasm && ./build.sh`
-- **React changes**: Hot-reload is automatic when dev server is running
+- **React changes**: Hot-reload is automatic when dev server is running.
 - **Build for production**: `npm run build` in zxplorer-web/
 
-## License
-
-Apache 2.0 (same as QuiZX)
-
-## Credits
-
-- Built on [QuiZX](https://github.com/zxcalc/quizx) by Aleks Kissinger and John van de Wetering
-- Inspired by [ZXLive](https://github.com/zxcalc/zxlive)
