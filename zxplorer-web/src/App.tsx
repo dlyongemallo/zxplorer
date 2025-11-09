@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { createExampleGraph } from './utils/exampleGraphs'
+import ZXDiagram from '../web/components/ZXDiagram'
 
 function App() {
   const [wasmLoaded, setWasmLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [graphInfo, setGraphInfo] = useState<string>('')
 
   useEffect(() => {
     let initialized = false
@@ -24,10 +23,6 @@ function App() {
 
         console.log('WASM module initialized successfully!')
         setWasmLoaded(true)
-
-        // Create example graph
-        const graph = createExampleGraph()
-        setGraphInfo(`Created example graph: ${graph.to_string()}`)
       } catch (err: any) {
         console.error('Failed to load WASM module:', err)
         setError(err.message || 'Unknown error loading WASM')
@@ -64,16 +59,7 @@ function App() {
 
   return (
     <div className="App">
-      <header>
-        <h1>ZXplorer</h1>
-        <p>Interactive ZX-diagram editor powered by QuiZX</p>
-      </header>
-      <main style={{ padding: '40px 20px' }}>
-        <p style={{ fontSize: '1.1em', color: '#333' }}>{graphInfo}</p>
-        <p style={{ marginTop: '20px', color: '#666' }}>
-          Visual editor coming soon...
-        </p>
-      </main>
+      <ZXDiagram />
     </div>
   )
 }
